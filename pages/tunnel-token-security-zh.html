@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflared Token 安全部署手册 — 最终版</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    font-size: 15px; line-height: 1.8; color: #1a1a1a;
+    max-width: 1020px; margin: 40px auto; padding: 0 32px 80px; background: #fff;
+  }
+  h1 { font-size: 26px; border-bottom: 3px solid #e63900; padding-bottom: 12px; margin-top: 48px; }
+  h2 { font-size: 19px; border-left: 5px solid #e63900; padding: 10px 14px; background: #fff8f6; border-radius: 0 6px 6px 0; margin-top: 40px; }
+  h3 { font-size: 16px; color: #333; margin-top: 24px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+  h4 { font-size: 14px; color: #555; margin-top: 16px; font-weight: 700; }
+  p { margin: 10px 0; }
+  a { color: #e63900; }
+  code { background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px; padding: 1px 6px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; color: #c7254e; }
+  pre { background: #1e1e2e; color: #cdd6f4; border-radius: 10px; padding: 18px 22px; overflow-x: auto; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; line-height: 1.7; margin: 12px 0; border-left: 4px solid #e63900; }
+  pre .c { color: #6c7086; font-style: italic; }
+  pre .r { color: #f38ba8; font-weight: bold; }
+  pre .o { color: #a6e3a1; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th { background: #e63900; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+  td { padding: 9px 14px; border: 1px solid #ddd; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .step { border: 2px solid #e63900; border-radius: 10px; margin: 28px 0; overflow: hidden; }
+  .step-hd { background: #e63900; color: white; padding: 12px 20px; font-size: 15px; font-weight: bold; }
+  .step-bd { padding: 20px 24px; }
+  .purpose { background: #f0f7ff; border: 1px solid #b3d4f5; border-radius: 8px; padding: 11px 16px; margin: 10px 0; font-size: 14px; color: #1a4a7a; }
+  .purpose strong { display: block; margin-bottom: 3px; }
+  .warn { background: #fffbe6; border: 1px solid #ffe066; border-radius: 8px; padding: 11px 16px; margin: 10px 0; font-size: 14px; color: #7a5a00; }
+  .ok { background: #f0fff4; border: 1px solid #68d391; border-radius: 8px; padding: 11px 16px; margin: 10px 0; font-size: 14px; color: #1a5a2a; }
+  .ok strong { display: block; margin-bottom: 3px; }
+  .danger { background: #fff0f0; border: 1px solid #f5a0a0; border-radius: 8px; padding: 11px 16px; margin: 10px 0; font-size: 14px; color: #8b0000; }
+  .danger strong { display: block; margin-bottom: 3px; }
+  .replace { background: #fff8e6; border: 1px solid #f0c040; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  .replace h4 { margin: 0 0 8px 0; color: #7a5000; }
+  .replace table th { background: #c07000; font-size: 13px; padding: 7px 12px; }
+  .replace table td { padding: 7px 12px; font-size: 13px; }
+  .toc { background: #f9f9f9; border: 1px solid #eee; border-radius: 10px; padding: 18px 26px; margin-bottom: 32px; }
+  .toc h3 { border: none; margin-top: 0; color: #333; }
+  .toc a { color: #e63900; text-decoration: none; font-weight: 500; }
+  .toc a:hover { text-decoration: underline; }
+  ul li, ol li { margin: 5px 0; }
+  hr { border: none; border-top: 1px solid #eee; margin: 36px 0; }
+  .env { display: inline-block; color: white; font-size: 11px; font-weight: bold; padding: 2px 9px; border-radius: 4px; margin-right: 6px; vertical-align: middle; white-space: nowrap; }
+  .env-mac { background: #0060df; }
+  .env-vm  { background: #1a7f37; }
+  .env-web { background: #8a3ffc; }
+  .compliance-box { background: #f8f0ff; border: 2px solid #8a3ffc; border-radius: 10px; padding: 18px 22px; margin: 20px 0; }
+  .compliance-box h3 { border-color: #c0a0e0; color: #4a0080; }
+  .nav-top { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; padding: 12px 18px; background: #f4f4f4; border-radius: 8px; font-size: 13px; }
+  .nav-top a { color: #e63900; text-decoration: none; font-weight: 500; }
+  .lang-switch { margin-left: auto; }
+</style>
+</head>
+<body>
+
+<div class="nav-top">
+  <a href="index.html">← 所有文档</a>
+  <span style="color:#bbb;">|</span>
+  <span>Tunnel Token 安全部署手册</span>
+  <div class="lang-switch"><a href="tunnel-token-security-en.html">English →</a></div>
+</div>
+
+<h1>Cloudflared Token 安全部署手册</h1>
+<p style="color:#888; font-size:13px;">
+  <strong>目标：</strong>客户将 CF tunnel token 安全存储在自己的 AWS Secrets Manager，CMI 使用 Docker 容器运行 cloudflared，token 通过 <code>--token-file</code> 注入容器，不以明文出现在任何配置文件或进程参数中。<br>
+  版本：2026-04 &nbsp;|&nbsp; 基于实际部署环境（Amazon Linux 2 + Docker 25.0.14）验证 &nbsp;|&nbsp; 预计完成时间：90 分钟
+</p>
+
+<div style="background:#f4f4f4; border-radius:8px; padding:12px 18px; margin:16px 0; font-size:14px;">
+  <strong>每个步骤标注了执行位置：</strong><br>
+  <span class="env env-mac">MAC</span> 在你自己的 Mac / 电脑上执行 &nbsp;&nbsp;
+  <span class="env env-vm">宿主机</span> SSH 登录到 CMI 提供的 EC2 上执行 &nbsp;&nbsp;
+  <span class="env env-web">CF 控制台</span> 在浏览器中操作 Cloudflare Dashboard
+</div>
+
+<div class="toc">
+  <h3>目录</h3>
+  <ol>
+    <li><a href="#overview">整体架构与安全边界说明</a></li>
+    <li><a href="#pre">前置条件确认</a></li>
+    <li><a href="#s1">Step 1：配置 Mac 上的 AWS CLI 认证</a></li>
+    <li><a href="#s2">Step 2：查找并记录 AWS Account ID</a></li>
+    <li><a href="#s3">Step 3：在 CF Dashboard 创建 Tunnel 并获取 Token</a></li>
+    <li><a href="#s4">Step 4：把 Token 存入 AWS Secrets Manager</a></li>
+    <li><a href="#s5">Step 5：创建 IAM Policy（最小读取权限）</a></li>
+    <li><a href="#s6">Step 6：创建 IAM Role 并绑定 Policy</a></li>
+    <li><a href="#s7">Step 7：把 IAM Role 绑定到 EC2 实例</a></li>
+    <li><a href="#s8">Step 8：在宿主机安装 Docker 和 AWS CLI</a></li>
+    <li><a href="#s9">Step 9：从 AWS 拉取 Token 并写入本地密钥文件</a></li>
+    <li><a href="#s10">Step 10：创建 docker-compose.yml 并启动容器</a></li>
+    <li><a href="#s11">Step 11：验证 Tunnel 正常运行</a></li>
+    <li><a href="#s12">Step 12：安全防护效果验证（含 root 视角透明说明）</a></li>
+    <li><a href="#summary">安全防护总结对比</a></li>
+    <li><a href="#compliance">CMI 合规审计与运营承诺</a></li>
+    <li><a href="#faq">常见问题排查</a></li>
+  </ol>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h1 id="overview">整体架构与安全边界说明</h1>
+
+<h3>为什么需要这套方案</h3>
+<p>传统部署方式（<code>--token eyJ...</code> 直接写进配置）存在以下静态暴露问题：</p>
+<ul>
+  <li><code>docker inspect &lt;container&gt;</code> → token 明文出现在 Args 字段</li>
+  <li><code>cat /etc/systemd/system/cloudflared.service</code> → token 明文可见</li>
+  <li><code>ps aux</code> → token 明文出现在进程参数</li>
+</ul>
+
+<h3>本方案的两层隔离</h3>
+<ul>
+  <li><strong>存储层隔离：</strong>token 存储在客户自己的 AWS Secrets Manager，CMI 没有客户的 AWS 账号权限，无法访问。</li>
+  <li><strong>运行层隔离：</strong>cloudflared 运行在 Docker 容器内，使用 <code>--token-file</code> 读取密钥文件，token 值不出现在 <code>docker inspect</code>、<code>ps aux</code> 或任何配置文件的明文位置。</li>
+</ul>
+
+<pre><code><span class="c">┌──────────────────────────────────────────────────────────────────────┐
+│            客户自己的 AWS 账号（CMI 无任何访问权限）                    │
+│                                                                      │
+│   AWS Secrets Manager                                                │
+│   └── prod/cloudflare/warp-reverse-tunnel-token-aws                 │
+│         token 加密存储（AES-256）                                    │
+│         访问控制：只允许绑定到宿主机的 IAM Role 读取                  │
+│         CMI 账号无 IAM 权限 → GetSecretValue 返回 403               │
+└─────────────────────────────┬────────────────────────────────────────┘
+                              │ Instance Profile 自动认证（无需存储密钥）
+                              │
+┌─────────────────────────────▼────────────────────────────────────────┐
+│                       CMI 提供的宿主机（EC2）                          │
+│                                                                      │
+│  AWS CLI 启动时拉取 token → 写入 /opt/cloudflared/secrets/tunnel.token│
+│  目录权限：700（仅 root 可进入）                                      │
+│  文件权限：604（root 读写，容器内非 root 用户只读）                    │
+│                                                                      │
+│  docker-compose.yml（CMI 运维可见，但无 token 值）                    │
+│  └── secrets.tunnel_token.file → /opt/cloudflared/secrets/tunnel.token
+│                                                                      │
+│  cloudflared 容器（UID 65532 运行）                                   │
+│  └── command: tunnel run --token-file /run/secrets/tunnel_token      │
+│        ↑ 文件路径，不是 token 值                                      │
+└─────────────────────────────┬────────────────────────────────────────┘
+                              │ QUIC / TLS 1.3（4条连接到 CF 边缘）
+                              ▼
+                     Cloudflare 全球网络</span></code></pre>
+
+<div class="danger">
+  <strong>透明说明：本方案的剩余暴露窗口</strong><br>
+  任何运行中的进程，其持有的凭证在技术上都可以被宿主机的 root 用户通过内存读取获得。cloudflared 也不例外。具体路径：<br>
+  <code>sudo docker exec cloudflared-prod cat /run/secrets/tunnel_token</code> → token 明文可见<br>
+  <br>
+  这是 Linux 操作系统的基本设计，不是 cloudflared 或本方案的缺陷。<strong>本方案解决的是静态存储暴露（配置文件、docker inspect、ps aux），而非运行时内存暴露。</strong>
+  对于运行时风险，CMI 通过合规审计和权限管控机制（见文末"合规审计"章节）进行约束。
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h1 id="pre">前置条件确认</h1>
+
+<table>
+  <tr><th>条件</th><th>说明</th><th>确认</th></tr>
+  <tr><td>独立的 AWS 账号</td><td>必须是 CMI 完全无访问权限的独立账号。如果 CMI 同时管理你的 AWS 账号，本方案无效。</td><td>☐</td></tr>
+  <tr><td>AWS IAM 管理权限</td><td>能创建 IAM Policy、Role、Instance Profile</td><td>☐</td></tr>
+  <tr><td>CMI 提供的 EC2 实例</td><td>Amazon Linux 2（或 Ubuntu 20.04+）</td><td>☐</td></tr>
+  <tr><td>能 SSH 登录 EC2</td><td>有登录宿主机的权限</td><td>☐</td></tr>
+  <tr><td>Cloudflare One 账号</td><td>已开通 Zero Trust，能创建 Tunnel</td><td>☐</td></tr>
+  <tr><td>Mac 上有 AWS CLI</td><td>如未安装见 Step 1</td><td>☐</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 1：配置 Mac 上的 AWS CLI 认证</div>
+<div class="step-bd" id="s1">
+
+<div class="purpose"><strong>目的：</strong>让你的 Mac 能通过命令行操作 AWS，用于后续创建 Secret、IAM Policy、Role 等。如果偏好网页操作，所有步骤也可在 AWS Console 完成，本步可跳过。</div>
+
+<h3>1-A：确认 AWS CLI 已安装</h3>
+<pre><code>aws --version</code></pre>
+<div class="ok"><strong>预期输出：</strong>
+<pre><code><span class="o">aws-cli/2.x.x Python/3.x.x Darwin/...</span></code></pre>
+如未安装，访问 <a href="https://aws.amazon.com/cli/" target="_blank">https://aws.amazon.com/cli/</a> 下载 macOS 安装包。
+</div>
+
+<h3>1-B：创建 AWS Access Key</h3>
+<ol>
+  <li>登录 <a href="https://console.aws.amazon.com" target="_blank">https://console.aws.amazon.com</a></li>
+  <li>右上角点击用户名 → <strong>Security credentials</strong></li>
+  <li>向下滚动到 <strong>Access keys</strong> 区域</li>
+  <li>点击 <strong>Create access key</strong>（如按钮为灰色，说明已有 2 个 Key，需先删除一个旧的）</li>
+  <li>Use case 选择 <strong>Command Line Interface (CLI)</strong> → 勾选确认 → Next → Create</li>
+  <li>页面显示 Access key ID 和 Secret access key，<strong>仅显示一次，立即复制保存</strong></li>
+</ol>
+
+<div class="warn"><strong>如果 Create access key 按钮是灰色：</strong>AWS 每个账号最多 2 个 Access Key。进入 Access keys 列表，删除一个最久未使用的旧 Key 后，按钮即可点击。</div>
+
+<div class="replace">
+  <h4>记录以下信息（仅自己保存）</h4>
+  <table>
+    <tr><th>字段</th><th>格式说明</th><th>示例（替换为你的真实值）</th></tr>
+    <tr><td>Access key ID</td><td>AKIA 开头，20位字母数字</td><td>AKIAIOSFODNN7EXAMPLE</td></tr>
+    <tr><td>Secret access key</td><td>40位字符串</td><td>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</td></tr>
+  </table>
+</div>
+
+<h3>1-C：配置 AWS CLI</h3>
+<pre><code>aws configure</code></pre>
+<p>依次输入：</p>
+<pre><code><span class="o">AWS Access Key ID [None]:</span>      <span class="r">AKIAIOSFODNN7EXAMPLE</span>           <span class="c">← 替换为你的 Access Key ID</span>
+<span class="o">AWS Secret Access Key [None]:</span>  <span class="r">wJalrXUtnFEMI/K7MDENG/bPxRfi</span>   <span class="c">← 替换为你的 Secret Access Key</span>
+<span class="o">Default region name [None]:</span>    <span class="r">ap-southeast-1</span>                 <span class="c">← 你的 AWS 区域（见下表）</span>
+<span class="o">Default output format [None]:</span>  <span class="r">json</span></code></pre>
+
+<div class="replace">
+  <h4>常用 AWS 区域代码</h4>
+  <table>
+    <tr><th>区域</th><th>代码</th></tr>
+    <tr><td>新加坡</td><td>ap-southeast-1</td></tr>
+    <tr><td>香港</td><td>ap-east-1</td></tr>
+    <tr><td>东京</td><td>ap-northeast-1</td></tr>
+    <tr><td>美国东部</td><td>us-east-1</td></tr>
+    <tr><td>欧洲（爱尔兰）</td><td>eu-west-1</td></tr>
+  </table>
+</div>
+
+<h3>1-D：验证配置成功</h3>
+<pre><code>aws sts get-caller-identity</code></pre>
+<div class="ok"><strong>预期输出：</strong>
+<pre><code><span class="o">{
+    "UserId": "AIDAIOSFODNN7EXAMPLE",
+    "Account": "123456789012",    <span class="c">← 12位 Account ID，记录下来</span>
+    "Arn": "arn:aws:iam::123456789012:user/your-username"
+}</span></code></pre>
+</div>
+
+<div class="warn"><strong>如果报错 "Could not connect to the endpoint URL"：</strong><br>
+网络问题或区域未设置。尝试：<code>aws sts get-caller-identity --region ap-southeast-1</code>（替换为你的区域）。如仍报错，检查网络或尝试 VPN。
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 2：查找并记录 AWS Account ID</div>
+<div class="step-bd" id="s2">
+
+<div class="purpose"><strong>目的：</strong>AWS Account ID 是 12 位纯数字，后续创建 IAM Policy 时 ARN 中会用到。</div>
+
+<p>从 Step 1-D 的输出中找到 <code>"Account"</code> 字段，或登录 AWS Console 后点击右上角用户名，下拉菜单显示 Account ID。</p>
+
+<div class="replace">
+  <h4>记录以下信息</h4>
+  <table>
+    <tr><th>变量名</th><th>说明</th><th>示例（替换为你的真实值）</th></tr>
+    <tr><td>AWS_ACCOUNT_ID</td><td>12位纯数字</td><td>123456789012</td></tr>
+    <tr><td>AWS_REGION</td><td>区域代码</td><td>ap-southeast-1</td></tr>
+  </table>
+  <p>后续文档中所有出现 <code>123456789012</code> 和 <code>ap-southeast-1</code> 的地方，均需替换为你的真实值。</p>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-web">CF 控制台</span> Step 3：在 CF Dashboard 创建 Tunnel 并获取 Token</div>
+<div class="step-bd" id="s3">
+
+<div class="purpose"><strong>目的：</strong>在 Cloudflare 创建 tunnel，拿到 token 字符串（以 eyJ 开头）。这一步只需复制 token，不执行页面给出的任何安装命令。</div>
+
+<ol>
+  <li>打开 <a href="https://one.dash.cloudflare.com" target="_blank">https://one.dash.cloudflare.com</a>，选择你的账号</li>
+  <li>左侧菜单：<strong>Networks → Connectors → Cloudflare Tunnels</strong></li>
+  <li>点击 <strong>Create a tunnel</strong></li>
+  <li>Connector type 选择 <strong>Cloudflared</strong> → Next</li>
+  <li>Tunnel name 填写一个有意义的名字，例：<code>warp-reverse-tunnel</code></li>
+  <li>点击 <strong>Save tunnel</strong></li>
+  <li>下一页，Operating system 选择 <strong>Docker</strong></li>
+  <li>页面显示命令如下，<strong>只复制 eyJ 开头的 token 字符串</strong>，不执行整条命令：</li>
+</ol>
+
+<pre><code><span class="c">页面显示：</span>
+docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token <span class="r">eyJhIjoiMDI5N2Rm...（这里是完整 token）</span>
+                                                                             ↑
+                                                              只复制这一长串，到末尾为止</code></pre>
+
+<div class="warn">
+  <strong>无论选哪个操作系统（Docker / Debian / Windows），token 值完全相同。</strong>选 Docker 只是让页面显示格式与我们的部署方式一致。<br><br>
+  <strong>此时不要点 Next，也不要执行任何命令。</strong>页面下方显示 "No connectors installed" 是正常的，等 Step 10 Docker 部署完成后这里会自动出现 connector。
+</div>
+
+<div class="replace">
+  <h4>记录以下信息</h4>
+  <table>
+    <tr><th>变量名</th><th>说明</th><th>示例</th></tr>
+    <tr><td>CF_TUNNEL_TOKEN</td><td>eyJ 开头的完整 token，通常几百字符</td><td>eyJhIjoiMDI5N2Rm...</td></tr>
+    <tr><td>CF_TUNNEL_NAME</td><td>tunnel 名字</td><td>warp-reverse-tunnel</td></tr>
+  </table>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 4：把 Token 存入 AWS Secrets Manager</div>
+<div class="step-bd" id="s4">
+
+<div class="purpose"><strong>目的：</strong>将 CF tunnel token 加密存储到你自己的 AWS 账号。CMI 没有你的 AWS 账号权限，无法访问。这一步在 Mac 上执行，不在宿主机上。</div>
+
+<div class="warn"><strong>如果 Secret 名称已存在但处于"待删除"状态：</strong>AWS 默认会在 7 天后才真正删除 Secret，这段时间内不能创建同名 Secret。遇到此情况，需换一个不重复的名称，并确保后续所有命令中都使用该新名称。</div>
+
+<h3>方式 A：AWS CLI 创建</h3>
+<pre><code><span class="c"># 把下面的 token 值和区域替换为你的真实值</span>
+aws secretsmanager create-secret \
+  --name "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --description "Cloudflare tunnel token for Warp Reverse solution" \
+  --secret-string "<span class="r">eyJhIjoiMDI5N2RmMzE5...(替换为 Step 3 复制的完整 token)</span>" \
+  --region <span class="r">ap-southeast-1</span></code></pre>
+
+<div class="ok"><strong>预期输出：</strong>
+<pre><code><span class="o">{
+    "ARN": "arn:aws:secretsmanager:ap-southeast-1:123456789012:secret:prod/cloudflare/warp-reverse-tunnel-token-aws-AbCdEf",
+    "Name": "prod/cloudflare/warp-reverse-tunnel-token-aws",
+    "VersionId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}</span></code></pre>
+<strong>记录 ARN 完整值（含末尾的随机后缀如 <code>-AbCdEf</code>），Step 5 要用。</strong>
+</div>
+
+<h3>方式 B：AWS Console 网页创建</h3>
+<ol>
+  <li>AWS Console → 搜索 <strong>Secrets Manager</strong> → <strong>Store a new secret</strong></li>
+  <li>Secret type 选 <strong>Other type of secret</strong></li>
+  <li>切换到 <strong>Plaintext</strong> 模式，粘贴完整 token → Next</li>
+  <li>Secret name 填：<code>prod/cloudflare/warp-reverse-tunnel-token-aws</code> → Next → Next → Store</li>
+  <li>创建成功后点进该 Secret，复制页面上方的 <strong>Secret ARN</strong></li>
+</ol>
+
+<h3>验证 Secret 存储成功</h3>
+<pre><code><span class="c"># describe-secret 不返回 token 明文，只返回元数据</span>
+aws secretsmanager describe-secret \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region <span class="r">ap-southeast-1</span></code></pre>
+<div class="ok"><strong>预期输出（确认没有 DeletedDate 字段，否则需要先 restore-secret）：</strong>
+<pre><code><span class="o">{
+    "ARN": "arn:aws:secretsmanager:ap-southeast-1:123456789012:secret:prod/cloudflare/warp-reverse-tunnel-token-aws-AbCdEf",
+    "Name": "prod/cloudflare/warp-reverse-tunnel-token-aws",
+    "Description": "Cloudflare tunnel token for Warp Reverse solution",
+    ...
+}</span></code></pre>
+如果输出中出现 <code>"DeletedDate"</code>，说明该 Secret 处于待删除状态，需先执行：<br>
+<code>aws secretsmanager restore-secret --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" --region ap-southeast-1</code>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 5：创建 IAM Policy（最小读取权限）</div>
+<div class="step-bd" id="s5">
+
+<div class="purpose"><strong>目的：</strong>创建一个权限极小的 IAM Policy，只允许读取刚才那一个 Secret，其他任何 AWS 资源均不允许操作。</div>
+
+<pre><code><span class="c"># 把 ap-southeast-1 替换为你的区域，123456789012 替换为你的 Account ID</span>
+cat > /tmp/cf-tunnel-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReadTunnelToken",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ],
+      "Resource": "arn:aws:secretsmanager:<span class="r">ap-southeast-1</span>:<span class="r">123456789012</span>:secret:prod/cloudflare/warp-reverse-tunnel-token-aws-*"
+    }
+  ]
+}
+EOF
+
+aws iam create-policy \
+  --policy-name "CloudflareTunnelTokenReadOnly" \
+  --description "Read-only access to Cloudflare tunnel token in Secrets Manager" \
+  --policy-document file:///tmp/cf-tunnel-policy.json</code></pre>
+
+<div class="replace">
+  <h4>需要替换的值</h4>
+  <table>
+    <tr><th>占位符</th><th>替换为</th><th>来源</th></tr>
+    <tr><td><code>ap-southeast-1</code></td><td>你的 AWS 区域代码</td><td>Step 2 记录的 AWS_REGION</td></tr>
+    <tr><td><code>123456789012</code></td><td>你的 AWS Account ID（12位数字）</td><td>Step 2 记录的 AWS_ACCOUNT_ID</td></tr>
+  </table>
+  <p>Resource 末尾的 <code>-*</code> 是通配符，用于匹配 AWS 自动添加的随机后缀（如 <code>-AbCdEf</code>）。</p>
+</div>
+
+<div class="ok"><strong>预期输出：</strong>
+<pre><code><span class="o">{
+    "Policy": {
+        "PolicyName": "CloudflareTunnelTokenReadOnly",
+        "Arn": "arn:aws:iam::123456789012:policy/CloudflareTunnelTokenReadOnly",
+        ...
+    }
+}</span></code></pre>
+记录 Policy ARN（<code>arn:aws:iam::123456789012:policy/CloudflareTunnelTokenReadOnly</code>），下一步用。
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 6：创建 IAM Role 并绑定 Policy</div>
+<div class="step-bd" id="s6">
+
+<div class="purpose"><strong>目的：</strong>IAM Role 是可以被 EC2 服务扮演的身份。EC2 实例扮演此 Role 后，自动获得读取 Secret 的临时凭证，无需在宿主机上存储任何 AWS Access Key。</div>
+
+<pre><code><span class="c"># 第一步：创建 Trust Policy（只允许 EC2 服务扮演此 Role）</span>
+cat > /tmp/ec2-trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "ec2.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+<span class="c"># 第二步：创建 Role</span>
+aws iam create-role \
+  --role-name "cf-tunnel-ec2-role" \
+  --description "EC2 role for cloudflared, read tunnel token from Secrets Manager" \
+  --assume-role-policy-document file:///tmp/ec2-trust-policy.json
+
+<span class="c"># 第三步：绑定 Policy（把 123456789012 替换为你的 Account ID）</span>
+aws iam attach-role-policy \
+  --role-name "cf-tunnel-ec2-role" \
+  --policy-arn "arn:aws:iam::<span class="r">123456789012</span>:policy/CloudflareTunnelTokenReadOnly"
+
+<span class="c"># 第四步：创建 Instance Profile</span>
+aws iam create-instance-profile \
+  --instance-profile-name "cf-tunnel-ec2-profile"
+
+<span class="c"># 第五步：把 Role 加入 Instance Profile</span>
+aws iam add-role-to-instance-profile \
+  --instance-profile-name "cf-tunnel-ec2-profile" \
+  --role-name "cf-tunnel-ec2-role"</code></pre>
+
+<div class="ok"><strong>验证：</strong>
+<pre><code>aws iam list-attached-role-policies --role-name "cf-tunnel-ec2-role"
+<span class="o">{
+    "AttachedPolicies": [
+        {
+            "PolicyName": "CloudflareTunnelTokenReadOnly",
+            "PolicyArn": "arn:aws:iam::123456789012:policy/CloudflareTunnelTokenReadOnly"
+        }
+    ]
+}</span></code></pre>
+</div>
+
+<h3>或通过 AWS Console 创建</h3>
+<ol>
+  <li>IAM → Roles → <strong>Create role</strong> → AWS service → EC2 → Next</li>
+  <li>搜索并勾选 <code>CloudflareTunnelTokenReadOnly</code> → Next</li>
+  <li>Role name 填 <code>cf-tunnel-ec2-role</code> → Create role</li>
+</ol>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-web">AWS Console</span> / <span class="env env-mac">MAC</span> Step 7：把 IAM Role 绑定到 EC2 实例</div>
+<div class="step-bd" id="s7">
+
+<div class="purpose"><strong>目的：</strong>将 Step 6 的 Role 绑定到 CMI 提供的 EC2 实例，绑定后 EC2 上的程序可自动获得临时 AWS 凭证（每小时轮换），无需手动管理密钥。</div>
+
+<h3>方式 A：AWS Console（推荐）</h3>
+<ol>
+  <li>AWS Console → EC2 → Instances</li>
+  <li>勾选目标实例 → <strong>Actions → Security → Modify IAM role</strong></li>
+  <li>下拉选择 <code>cf-tunnel-ec2-role</code> → <strong>Update IAM role</strong></li>
+</ol>
+
+<h3>方式 B：AWS CLI</h3>
+<pre><code><span class="c"># 把 i-xxxxxxxxxxxxxxxxx 替换为你的 EC2 Instance ID（AWS Console → EC2 → Instances 中查看）</span>
+aws ec2 associate-iam-instance-profile \
+  --instance-id <span class="r">i-xxxxxxxxxxxxxxxxx</span> \
+  --iam-instance-profile Name="cf-tunnel-ec2-profile" \
+  --region <span class="r">ap-southeast-1</span></code></pre>
+
+<h3>在宿主机上验证绑定成功</h3>
+<pre><code><span class="c"># 通过 EC2 元数据服务查询（在宿主机上执行）</span>
+curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/</code></pre>
+<div class="ok"><strong>预期输出（Role 名字）：</strong>
+<pre><code><span class="o">cf-tunnel-ec2-role</span></code></pre>
+若无输出，等待 1-2 分钟后重试。
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">宿主机</span> Step 8：安装 Docker 和 AWS CLI</div>
+<div class="step-bd" id="s8">
+
+<div class="purpose"><strong>目的：</strong>宿主机需要 Docker（运行 cloudflared 容器）和 AWS CLI（拉取 token）。cloudflared 本身不安装在宿主机，完全在容器内运行。</div>
+
+<h3>安装 Docker</h3>
+
+<h4>Amazon Linux 2（本手册验证的环境）</h4>
+<div class="warn"><strong>注意：</strong>Amazon Linux 2 不支持通用的 <code>get.docker.com</code> 脚本，会报 <code>ERROR: Unsupported distribution 'amzn'</code>。必须使用 AWS 官方 repo。如机器上有损坏的第三方 repo（如 ookla speedtest），需用 <code>--disablerepo</code> 绕过，否则 yum 整体失败。</div>
+
+<pre><code><span class="c"># 使用 AWS 官方 repo 安装，绕过可能损坏的第三方 repo</span>
+sudo yum install -y docker \
+  --disablerepo="*" \
+  --enablerepo="amzn2-core,amzn2extra-docker"
+
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+newgrp docker  <span class="c"># 刷新用户组，之后无需 sudo 运行 docker</span></code></pre>
+
+<h4>Ubuntu / Debian</h4>
+<pre><code>curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+newgrp docker</code></pre>
+
+<h4>安装 Docker Compose Plugin（Amazon Linux 2 需单独安装）</h4>
+<pre><code>sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose</code></pre>
+
+<div class="ok"><strong>验证：</strong>
+<pre><code>docker --version && docker compose version
+<span class="o">Docker version 25.0.14, build 0bab007
+Docker Compose version v5.1.1</span></code></pre>
+</div>
+
+<h3>安装 AWS CLI v2</h3>
+<pre><code>curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+sudo yum install -y unzip 2>/dev/null || sudo apt-get install -y unzip 2>/dev/null
+unzip -q /tmp/awscliv2.zip -d /tmp/
+sudo /tmp/aws/install
+aws --version</code></pre>
+
+<h3>验证 Instance Profile 能访问 Secrets Manager（无需 aws configure）</h3>
+<pre><code>aws secretsmanager describe-secret \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region <span class="r">ap-southeast-1</span></code></pre>
+<div class="ok"><strong>能看到 ARN 和 Name 说明权限正常，无需配置任何 Access Key。</strong></div>
+<div class="warn"><strong>AccessDeniedException：</strong>回到 Step 7 检查 IAM Role 绑定。<br>
+<strong>UnrecognizedClientException：</strong>区域填错或 Instance Profile 尚未生效，等 2 分钟再试。</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">宿主机</span> Step 9：从 AWS 拉取 Token 并写入本地密钥文件</div>
+<div class="step-bd" id="s9">
+
+<div class="purpose"><strong>目的：</strong>从 AWS 拉取 token 写入宿主机本地文件，供 Docker 容器以 secrets 方式挂载。目录和文件权限严格限制，普通运维人员无法读取。</div>
+
+<pre><code><span class="c"># 创建密钥目录（仅 root 可进入）</span>
+sudo mkdir -p /opt/cloudflared/secrets
+sudo chmod 700 /opt/cloudflared/secrets
+
+<span class="c"># 从 AWS 拉取 token，写入文件（替换区域）</span>
+aws secretsmanager get-secret-value \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region <span class="r">ap-southeast-1</span> \
+  --query "SecretString" \
+  --output text \
+  | sudo tee /opt/cloudflared/secrets/tunnel.token > /dev/null
+
+<span class="c"># 设置文件权限</span>
+<span class="c"># 604 = root 读写，group 无权，other 只读</span>
+<span class="c"># 注意：cloudflared 容器内以 UID 65532 运行（非 root）</span>
+<span class="c"># 需要 other 有读权限（r--），否则容器报 permission denied</span>
+sudo chmod 604 /opt/cloudflared/secrets/tunnel.token
+sudo chown root:root /opt/cloudflared/secrets/tunnel.token
+
+<span class="c"># 验证（普通用户 sudo 查看，ec2-user 无法直接访问该目录）</span>
+sudo stat /opt/cloudflared/secrets/tunnel.token | grep Access</code></pre>
+
+<div class="ok"><strong>预期输出：</strong>
+<pre><code><span class="o">Access: (0604/-rw----r--)  Uid: (0/root)   Gid: (0/root)</span></code></pre>
+<ul>
+  <li><code>rw-</code>（owner=root）：root 可读写</li>
+  <li><code>---</code>（group）：组成员无权限</li>
+  <li><code>r--</code>（other）：容器内 UID 65532 通过 other 权限读取</li>
+  <li>目录 <code>chmod 700</code>：普通运维账号连 <code>ls</code> 都报 Permission denied，无法进入目录</li>
+</ul>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">宿主机</span> Step 10：创建 docker-compose.yml 并启动容器</div>
+<div class="step-bd" id="s10">
+
+<div class="purpose"><strong>目的：</strong>通过 Docker Compose 启动 cloudflared 容器。核心设计：使用 <code>--token-file</code> 而非 <code>--token</code>，token 值不出现在 <code>docker inspect</code> 输出或任何配置文件中。</div>
+
+<pre><code>sudo mkdir -p /opt/cloudflared
+
+sudo tee /opt/cloudflared/docker-compose.yml > /dev/null << 'EOF'
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-prod
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token-file /run/secrets/tunnel_token
+    secrets:
+      - tunnel_token
+    tmpfs:
+      - /tmp
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+secrets:
+  tunnel_token:
+    file: /opt/cloudflared/secrets/tunnel.token
+EOF</code></pre>
+
+<div class="purpose"><strong>关键配置说明：</strong>
+<ul>
+  <li><code>--token-file /run/secrets/tunnel_token</code>：token 从文件读取，不出现在进程参数或 <code>docker inspect</code></li>
+  <li><code>secrets.tunnel_token.file</code>：指向 Step 9 创建的 root-only 密钥文件，通过 Docker secrets 机制挂载进容器</li>
+  <li><code>tmpfs: /tmp</code>：防止容器写临时文件到宿主机磁盘</li>
+  <li><code>restart: unless-stopped</code>：宿主机重启后容器自动恢复</li>
+</ul>
+<p><strong>注：已移除 <code>read_only: true</code></strong>——Docker secrets 挂载到 <code>/run/secrets/</code>，该路径在 read_only 模式下容器内 UID 65532 无法读取，会报 <code>permission denied</code>。改用 <code>tmpfs</code> 作为替代安全措施。</p>
+</div>
+
+<pre><code><span class="c"># 启动容器</span>
+cd /opt/cloudflared
+sudo docker compose up -d
+
+<span class="c"># 查看状态</span>
+sudo docker compose ps</code></pre>
+
+<div class="ok"><strong>预期输出：</strong>
+<pre><code><span class="o">NAME               IMAGE                           COMMAND    SERVICE       STATUS
+cloudflared-prod   cloudflare/cloudflared:latest   "..."      cloudflared   Up X seconds</span></code></pre>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">宿主机</span> / <span class="env env-web">CF 控制台</span> Step 11：验证 Tunnel 正常运行</div>
+<div class="step-bd" id="s11">
+
+<h3>验证 1：容器日志确认 4 条连接建立</h3>
+<pre><code>sudo docker logs cloudflared-prod --tail 30</code></pre>
+<div class="ok"><strong>预期输出（关键行）：</strong>
+<pre><code><span class="o">INF Starting tunnel tunnelID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+INF Registered tunnel connection connIndex=0 ... location=sin21 protocol=quic
+INF Registered tunnel connection connIndex=1 ... location=sin12 protocol=quic
+INF Registered tunnel connection connIndex=2 ... location=sin22 protocol=quic
+INF Registered tunnel connection connIndex=3 ... location=sin17 protocol=quic</span></code></pre>
+4 条连接建立在至少 2 个不同的数据中心，tunnel 正常工作。
+</div>
+
+<h3>验证 2：docker inspect 不暴露 token</h3>
+<pre><code>sudo docker inspect cloudflared-prod | grep -iE "token|eyJ"</code></pre>
+<div class="ok"><strong>预期输出：</strong>只含文件路径 <code>--token-file</code> 和 <code>/run/secrets/tunnel_token</code>，无任何 eyJ 开头的 token 值。</div>
+
+<h3>验证 3：进程参数不含 token</h3>
+<pre><code>ps aux | grep cloudflared</code></pre>
+<div class="ok"><strong>预期输出：</strong>
+<pre><code><span class="o">65532  xxxxx  ...  cloudflared --no-autoupdate tunnel --no-autoupdate run --token-file /run/secrets/tunnel_token</span>
+<span class="c">                                                                             ↑ 文件路径，不是 token 值</span></code></pre>
+</div>
+
+<h3>验证 4：CF Dashboard 确认 Healthy</h3>
+<ol>
+  <li><a href="https://one.dash.cloudflare.com" target="_blank">https://one.dash.cloudflare.com</a></li>
+  <li>Networks → Connectors → Cloudflare Tunnels</li>
+  <li>对应 tunnel 状态显示 <strong>Healthy</strong>（绿色）</li>
+</ol>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">宿主机</span> Step 12：安全防护效果验证（含 root 视角透明说明）</div>
+<div class="step-bd" id="s12">
+
+<div class="purpose"><strong>目的：</strong>从 CMI 运维人员和系统管理员的角度，逐一测试各种可能的 token 读取手段，诚实呈现哪些被阻断、哪些仍然可见。</div>
+
+<h3>测试 1：docker inspect（运维人员最常用的手段）</h3>
+<pre><code>sudo docker inspect cloudflared-prod | grep -iE "token|eyJ"</code></pre>
+<div class="ok"><strong>结果：防住。</strong>输出只含文件路径，无 token 值。这是 <code>--token-file</code> 与传统 <code>--token eyJ...</code> 直传的核心区别。</div>
+
+<h3>测试 2：查看 docker-compose.yml</h3>
+<pre><code>cat /opt/cloudflared/docker-compose.yml | grep -iE "eyJ"</code></pre>
+<div class="ok"><strong>结果：防住。</strong>配置文件只含文件路径和镜像名，无任何 token 值。</div>
+
+<h3>测试 3：普通运维账号读密钥文件</h3>
+<pre><code><span class="c"># 以普通运维账号（非 root）执行</span>
+ls /opt/cloudflared/secrets/tunnel.token
+cat /opt/cloudflared/secrets/tunnel.token</code></pre>
+<div class="ok"><strong>结果：防住。</strong>
+<pre><code><span class="o">ls: cannot access /opt/cloudflared/secrets/tunnel.token: Permission denied
+cat: /opt/cloudflared/secrets/tunnel.token: Permission denied</span></code></pre>
+目录 <code>chmod 700</code>，普通账号连目录都进不去。
+</div>
+
+<h3>测试 4：CMI 尝试访问客户的 AWS Secrets Manager</h3>
+<pre><code><span class="c"># 使用 CMI 自己的账号凭证（或无凭证）请求客户的 Secret</span>
+AWS_ACCESS_KEY_ID="" AWS_SECRET_ACCESS_KEY="" \
+aws secretsmanager get-secret-value \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region ap-southeast-1 \
+  --no-sign-request 2>&1 || true</code></pre>
+<div class="ok"><strong>结果：防住。</strong>
+<pre><code><span class="o">An error occurred (AuthFailure): Request must be signed</span></code></pre>
+CMI 没有客户 AWS 账号的 IAM 凭证，无法访问 Secrets Manager，这是本方案最核心的架构边界。
+</div>
+
+<h3>测试 5：root 通过 docker exec 进入容器读取 secret（⚠️ 剩余暴露）</h3>
+<pre><code><span class="c"># 需要 root 权限主动执行</span>
+sudo docker exec cloudflared-prod cat /run/secrets/tunnel_token</code></pre>
+<div class="danger"><strong>结果：token 明文可见。</strong><br><br>
+这是本方案已知且公开说明的剩余暴露面。原因：Docker secrets 机制将密钥文件以 tmpfs 方式挂载进容器，容器内进程可读；拥有宿主机 root 权限的人可以通过 <code>docker exec</code> 进入容器读取该文件。<br><br>
+同等路径还包括：<code>sudo cat /proc/$(docker inspect --format '{{.State.Pid}}' cloudflared-prod)/root/run/secrets/tunnel_token</code><br><br>
+<strong>这是 Linux 操作系统的基本属性，不是 cloudflared 或本方案的设计缺陷。任何运行中的进程，其凭证在技术上都可以被 root 读取。</strong><br><br>
+本方案的价值在于：将 token 暴露从"任何人随时可见（配置文件）"提升为"需要 root 主动操作才可见（且每次操作均被审计记录）"。CMI 对此的合规承诺见下方章节。
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h1 id="summary">安全防护总结对比</h1>
+
+<table>
+  <tr><th>读取手段</th><th>防护结果</th><th>说明</th></tr>
+  <tr><td><code>docker inspect</code></td><td>✅ 防住</td><td><code>--token-file</code> 方式，输出只含文件路径</td></tr>
+  <tr><td><code>cat docker-compose.yml</code></td><td>✅ 防住</td><td>配置文件无 token 值</td></tr>
+  <tr><td><code>ps aux</code></td><td>✅ 防住</td><td>进程参数只有文件路径</td></tr>
+  <tr><td>普通运维账号读密钥文件</td><td>✅ 防住</td><td>目录 700，文件 604，非 root 无法进入目录</td></tr>
+  <tr><td>访问客户 AWS Secrets Manager</td><td>✅ 防住</td><td>CMI 无客户 IAM 权限，架构上隔离</td></tr>
+  <tr><td>root 执行 <code>docker exec</code> 进容器</td><td>⚠️ 可见</td><td>Linux 系统级限制，需 root 主动操作，全程审计记录</td></tr>
+  <tr><td>root 扫描进程内存（<code>/proc/mem</code>）</td><td>⚠️ 可见</td><td>同上，操作系统级别，无纯软件方案可防</td></tr>
+</table>
+
+<h3>与传统部署方式对比</h3>
+<table>
+  <tr><th>对比维度</th><th>传统方式（<code>--token eyJ...</code> 直传）</th><th>本方案（Docker + <code>--token-file</code> + AWS）</th></tr>
+  <tr><td><code>docker inspect</code> 暴露</td><td>❌ token 明文在 Args</td><td>✅ 只含文件路径</td></tr>
+  <tr><td>配置文件落盘</td><td>❌ token 写入 compose/service 文件</td><td>✅ 密钥文件仅 root 可读，compose 文件无 token</td></tr>
+  <tr><td>静态存储（AWS）</td><td>N/A</td><td>✅ CMI 无 IAM 权限，403 拒绝</td></tr>
+  <tr><td>Token Rotate 操作</td><td>需修改配置文件并重启</td><td>✅ 重新拉取写入密钥文件，重启容器</td></tr>
+  <tr><td>主动攻击门槛</td><td>低（cat 一个文件即可）</td><td>高（需要 root 权限主动操作，全程留下审计痕迹）</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="compliance-box">
+<h1 id="compliance" style="border:none; margin-top:0; padding-bottom:8px; font-size:22px; color:#4a0080;">CMI 合规审计与运营承诺</h1>
+
+<p>鉴于本方案的技术透明性——拥有宿主机 root 权限的系统管理员在技术上仍可通过主动操作读取运行中容器内的 token——CMI 承诺以下合规机制，作为技术防护的补充约束：</p>
+
+<h3>一、最小权限原则</h3>
+<ul>
+  <li>宿主机的日常运维账号（如 ec2-user）不具备 root 权限，无法进入密钥目录或执行 <code>docker exec</code></li>
+  <li>root / sudo 权限仅限于特定系统管理员岗位，名单严格管控，实行双人审批机制</li>
+  <li>OpenBao（CMI 内部 Secrets Manager）中的 token KV 路径，CMI 运维账号无读取权限，仅宿主机的 AppRole 凭证可访问</li>
+</ul>
+
+<h3>二、全程审计日志</h3>
+<ul>
+  <li>宿主机启用 <code>auditd</code>，记录所有 <code>docker exec</code>、<code>ptrace</code>、<code>/proc</code> 访问等敏感操作，日志不可篡改</li>
+  <li>OpenBao 记录所有 Secret 读写事件，包含操作者身份、时间戳、来源 IP</li>
+  <li>AWS CloudTrail 记录 Secrets Manager 的所有 API 调用（客户可在自己 AWS 账号中查看）</li>
+  <li>审计日志保留期：不少于 90 天</li>
+</ul>
+
+<h3>三、客户可审查权</h3>
+<ul>
+  <li>客户可随时向 CMI 申请审计报告，CMI 将提供涉及该客户 token 的访问记录（仅限该客户的记录，不含其他客户信息）</li>
+  <li>客户可在自己的 AWS 账号 CloudTrail 中独立查看 Secrets Manager 的访问记录，无需依赖 CMI</li>
+</ul>
+
+<h3>四、合同层面约束</h3>
+<ul>
+  <li>CMI 与客户签署的服务协议中明确禁止 CMI 员工访问客户的 tunnel token 及其衍生凭证</li>
+  <li>违反此条款视为重大安全事故，适用相应的赔偿和法律责任条款</li>
+</ul>
+
+<h3>五、Token Rotate 建议</h3>
+<ul>
+  <li>建议客户定期 rotate token（最少每季度一次）</li>
+  <li>人员变动（如 CMI 负责该账号的技术人员离职）时，立即执行 token rotate</li>
+  <li>rotate 后，旧 token 在 Cloudflare 侧立即失效，即使此前被读取也无法继续使用</li>
+</ul>
+
+<p style="font-size:13px; color:#666; margin-top:16px;">
+  综上，CMI 的安全保障模型与业界主流的托管服务提供商（如 AWS、Azure）的责任共担原则一致：
+  <strong>CMI 承诺不主动访问客户凭证，并通过技术手段提高访问门槛、通过审计机制形成威慑，同时保留客户独立验证的能力。</strong>
+</p>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h1 id="faq">常见问题排查</h1>
+
+<h3>问题 1：<code>sudo yum install -y docker</code> 报错 "One of the configured repositories failed"</h3>
+<p>原因：机器上有损坏的第三方 repo（如 ookla speedtest）导致 yum 整体失败。解决方案：</p>
+<pre><code><span class="c"># 只启用 AWS 官方 repo</span>
+sudo yum install -y docker \
+  --disablerepo="*" \
+  --enablerepo="amzn2-core,amzn2extra-docker"</code></pre>
+
+<h3>问题 2：容器启动后反复重启，日志显示 "Failed to read token file: permission denied"</h3>
+<p>原因：cloudflared 容器内以 UID 65532 运行，文件权限 600 仅 root 可读，容器无法读取。</p>
+<pre><code><span class="c"># 确认容器内用户</span>
+sudo docker inspect cloudflared-prod | grep '"User"'
+<span class="c"># 应输出 "User": "65532:65532"</span>
+
+<span class="c"># 修正文件权限为 604（other 有读权限）</span>
+sudo chmod 604 /opt/cloudflared/secrets/tunnel.token
+
+<span class="c"># 重启容器</span>
+cd /opt/cloudflared && sudo docker compose down && sudo docker compose up -d</code></pre>
+
+<h3>问题 3：容器运行但 tunnel 显示 Unhealthy 或无连接</h3>
+<pre><code>sudo docker logs cloudflared-prod --tail 50 | grep -E "ERR|WARN|failed"</code></pre>
+<p>常见原因：宿主机安全组不允许出站 7844 端口。确保放行以下出站规则：</p>
+<ul>
+  <li><code>443/tcp</code> → <code>api.cloudflare.com</code></li>
+  <li><code>7844/tcp + 7844/udp</code> → <code>region1.v2.argotunnel.com</code> 和 <code>region2.v2.argotunnel.com</code></li>
+</ul>
+
+<h3>问题 4：如何 Rotate Token</h3>
+<ol>
+  <li><span class="env env-web">CF 控制台</span> Zero Trust → Networks → Tunnels → 选择 tunnel → Edit → <strong>Refresh token</strong>，复制新 token</li>
+  <li><span class="env env-mac">MAC</span> 更新 AWS Secrets Manager：</li>
+</ol>
+<pre><code>aws secretsmanager update-secret \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --secret-string "<span class="r">新的 eyJ 开头的完整 token</span>" \
+  --region <span class="r">ap-southeast-1</span></code></pre>
+<ol start="3">
+  <li><span class="env env-vm">宿主机</span> 重新拉取并重启：</li>
+</ol>
+<pre><code><span class="c"># 重新从 AWS 拉取新 token 写入密钥文件</span>
+aws secretsmanager get-secret-value \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region ap-southeast-1 \
+  --query "SecretString" \
+  --output text \
+  | sudo tee /opt/cloudflared/secrets/tunnel.token > /dev/null
+
+<span class="c"># 重启容器加载新 token</span>
+cd /opt/cloudflared && sudo docker compose restart cloudflared</code></pre>
+
+<p>旧 token 在 Cloudflare 侧立即失效。如怀疑有未授权 connector，追加强制断连：</p>
+<pre><code><span class="c"># ACCOUNT_ID 替换为你的 CF Account ID，TUNNEL_ID 替换为 Tunnel UUID，CLOUDFLARE_API_TOKEN 替换为有权限的 API Token</span>
+curl "https://api.cloudflare.com/client/v4/accounts/<span class="r">ACCOUNT_ID</span>/cfd_tunnel/<span class="r">TUNNEL_ID</span>/connections" \
+  --request DELETE \
+  --header "Authorization: Bearer <span class="r">CLOUDFLARE_API_TOKEN</span>"</code></pre>
+
+<hr>
+<p style="color:#aaa; font-size:12px; text-align:center;">
+  版本：2026-04（基于 Amazon Linux 2 + Docker 25.0.14 实测验证）&nbsp;|&nbsp;
+  技术来源：Cloudflare 官方文档 + AWS 官方文档 &nbsp;|&nbsp;
+  作者：Dong Zhang
+</p>
+
+</body>
+</html>

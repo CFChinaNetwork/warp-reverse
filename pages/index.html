@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>China Express: Warp Reverse — Documentation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 24px 80px;
+    color: #1a1a1a;
+  }
+  .logo {
+    width: 56px; height: 56px;
+    background: #e63900;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+    font-size: 28px;
+    color: white;
+    font-weight: 900;
+  }
+  h1 { font-size: 28px; margin-bottom: 8px; text-align: center; }
+  .subtitle { color: #666; font-size: 15px; margin-bottom: 48px; text-align: center; max-width: 540px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    width: 100%;
+  }
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 28px 26px;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #e8e8e8;
+    transition: box-shadow 0.15s, transform 0.15s;
+    display: block;
+  }
+  .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.10); transform: translateY(-2px); }
+  .card-icon { font-size: 28px; margin-bottom: 14px; }
+  .card h2 { font-size: 16px; margin-bottom: 8px; color: #1a1a1a; }
+  .card p { font-size: 13px; color: #666; line-height: 1.6; }
+  .card .lang { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-top: 14px; }
+  .lang-en { background: #e8f4fd; color: #0060df; }
+  .lang-zh { background: #fde8e8; color: #c00; }
+  .lang-ref { background: #e8fde8; color: #1a7f37; }
+  .divider { width: 100%; max-width: 900px; border: none; border-top: 1px solid #e0e0e0; margin: 40px 0 32px; }
+  .section-title { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #999; text-transform: uppercase; max-width: 900px; width: 100%; margin-bottom: 16px; }
+  footer { margin-top: 56px; font-size: 12px; color: #bbb; text-align: center; }
+  footer a { color: #bbb; }
+</style>
+</head>
+<body>
+
+<div class="logo">CF</div>
+<h1>China Express: Warp Reverse</h1>
+<p class="subtitle">Cross-border tunnel solution for China-based WARP users — full Zero Trust enforcement via CMI dedicated link.</p>
+
+<div class="section-title">Solution Guides</div>
+<div class="grid">
+  <a class="card" href="tunnel-token-security-zh.html">
+    <div class="card-icon">🔐</div>
+    <h2>Tunnel Token Security Deployment Guide</h2>
+    <p>AWS Secrets Manager + Docker deployment. Step-by-step with honest disclosure of security boundaries and CMI compliance commitments.</p>
+    <span class="lang lang-zh">中文</span>
+  </a>
+
+  <a class="card" href="tunnel-token-security-en.html">
+    <div class="card-icon">🔐</div>
+    <h2>Tunnel Token Security Deployment Guide</h2>
+    <p>AWS Secrets Manager + Docker deployment. Full English guide validated on Amazon Linux 2 + Docker 25.0.14.</p>
+    <span class="lang lang-en">English</span>
+  </a>
+</div>
+
+<hr class="divider">
+
+<div class="section-title">Reference</div>
+<div class="grid">
+  <a class="card" href="https://github.com/CFChinaNetwork/warp-reverse/blob/main/docs/warp-reverse-solution.md" target="_blank">
+    <div class="card-icon">📐</div>
+    <h2>Solution Overview</h2>
+    <p>Full architecture, traffic flow, configuration steps, Hostname Routes API, and performance benchmarks.</p>
+    <span class="lang lang-ref">GitHub →</span>
+  </a>
+
+  <a class="card" href="https://github.com/CFChinaNetwork/warp-reverse/blob/main/docs/china-domains.md" target="_blank">
+    <div class="card-icon">🌐</div>
+    <h2>China Domain List</h2>
+    <p>200+ curated mainland China root domains across e-commerce, cloud, government, social, and more — bulk upload ready.</p>
+    <span class="lang lang-ref">GitHub →</span>
+  </a>
+</div>
+
+<footer>
+  <a href="https://github.com/CFChinaNetwork/warp-reverse" target="_blank">CFChinaNetwork/warp-reverse</a>
+  &nbsp;·&nbsp; Cloudflare / CMI joint solution &nbsp;·&nbsp; 2026
+</footer>
+
+</body>
+</html>

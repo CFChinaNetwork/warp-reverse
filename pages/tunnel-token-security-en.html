@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflared Tunnel Token — Secure Deployment Guide</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-size: 15px; line-height: 1.8; color: #1a1a1a;
+    max-width: 1020px; margin: 40px auto; padding: 0 32px 80px; background: #fff;
+  }
+  h1 { font-size: 26px; border-bottom: 3px solid #e63900; padding-bottom: 12px; margin-top: 48px; }
+  h2 { font-size: 19px; border-left: 5px solid #e63900; padding: 10px 14px; background: #fff8f6; border-radius: 0 6px 6px 0; margin-top: 40px; }
+  h3 { font-size: 16px; color: #333; margin-top: 24px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+  h4 { font-size: 14px; color: #555; margin-top: 16px; font-weight: 700; }
+  p { margin: 10px 0; }
+  a { color: #e63900; }
+  code { background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px; padding: 1px 6px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; color: #c7254e; }
+  pre { background: #1e1e2e; color: #cdd6f4; border-radius: 10px; padding: 18px 22px; overflow-x: auto; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; line-height: 1.7; margin: 12px 0; border-left: 4px solid #e63900; }
+  pre .c { color: #6c7086; font-style: italic; }
+  pre .r { color: #f38ba8; font-weight: bold; }
+  pre .o { color: #a6e3a1; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th { background: #e63900; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+  td { padding: 9px 14px; border: 1px solid #ddd; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .step { border: 2px solid #e63900; border-radius: 10px; margin: 28px 0; overflow: hidden; }
+  .step-hd { background: #e63900; color: white; padding: 12px 20px; font-size: 15px; font-weight: bold; }
+  .step-bd { padding: 20px 24px; }
+  .purpose { background: #f0f7ff; border: 1px solid #b3d4f5; border-radius: 8px; padding: 11px 16px; margin: 10px 0; font-size: 14px; color: #1a4a7a; }
+  .purpose strong { display: block; margin-bottom: 3px; }
+  .warn { background: #fffbe6; border: 1px solid #ffe066; border-radius: 8px; padding: 11px 16px; margin: 10px 0; font-size: 14px; color: #7a5a00; }
+  .ok { background: #f0fff4; border: 1px solid #68d391; border-radius: 8px; padding: 11px 16px; margin: 10px 0; font-size: 14px; color: #1a5a2a; }
+  .ok strong { display: block; margin-bottom: 3px; }
+  .danger { background: #fff0f0; border: 1px solid #f5a0a0; border-radius: 8px; padding: 11px 16px; margin: 10px 0; font-size: 14px; color: #8b0000; }
+  .danger strong { display: block; margin-bottom: 3px; }
+  .replace { background: #fff8e6; border: 1px solid #f0c040; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  .replace h4 { margin: 0 0 8px 0; color: #7a5000; }
+  .replace table th { background: #c07000; font-size: 13px; padding: 7px 12px; }
+  .replace table td { padding: 7px 12px; font-size: 13px; }
+  .toc { background: #f9f9f9; border: 1px solid #eee; border-radius: 10px; padding: 18px 26px; margin-bottom: 32px; }
+  .toc h3 { border: none; margin-top: 0; color: #333; }
+  .toc a { color: #e63900; text-decoration: none; font-weight: 500; }
+  .toc a:hover { text-decoration: underline; }
+  ul li, ol li { margin: 5px 0; }
+  hr { border: none; border-top: 1px solid #eee; margin: 36px 0; }
+  .env { display: inline-block; color: white; font-size: 11px; font-weight: bold; padding: 2px 9px; border-radius: 4px; margin-right: 6px; vertical-align: middle; white-space: nowrap; }
+  .env-mac { background: #0060df; }
+  .env-vm  { background: #1a7f37; }
+  .env-web { background: #8a3ffc; }
+  .compliance-box { background: #f8f0ff; border: 2px solid #8a3ffc; border-radius: 10px; padding: 18px 22px; margin: 20px 0; }
+  .compliance-box h3 { border-color: #c0a0e0; color: #4a0080; }
+  .nav-top { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; padding: 12px 18px; background: #f4f4f4; border-radius: 8px; font-size: 13px; }
+  .nav-top a { color: #e63900; text-decoration: none; font-weight: 500; }
+  .lang-switch { margin-left: auto; }
+</style>
+</head>
+<body>
+
+<div class="nav-top">
+  <a href="index.html">← All Docs</a>
+  <span style="color:#bbb;">|</span>
+  <span>Tunnel Token Security Guide</span>
+  <div class="lang-switch"><a href="tunnel-token-security-zh.html">中文版 →</a></div>
+</div>
+
+<h1>Cloudflared Tunnel Token — Secure Deployment Guide</h1>
+<p style="color:#888; font-size:13px;">
+  <strong>Goal:</strong> Store the CF tunnel token in the customer's own AWS Secrets Manager. CMI runs <code>cloudflared</code> inside a Docker container using <code>--token-file</code>, so the token never appears in plaintext in any config file, process argument, or <code>docker inspect</code> output.<br>
+  Version: 2026-04 &nbsp;|&nbsp; Validated on: Amazon Linux 2 + Docker 25.0.14 &nbsp;|&nbsp; Estimated time: 90 min
+</p>
+
+<div style="background:#f4f4f4; border-radius:8px; padding:12px 18px; margin:16px 0; font-size:14px;">
+  <strong>Each step is labeled with its execution environment:</strong><br>
+  <span class="env env-mac">MAC</span> Run on your local Mac / laptop &nbsp;&nbsp;
+  <span class="env env-vm">HOST</span> SSH into the CMI-provided EC2 &nbsp;&nbsp;
+  <span class="env env-web">BROWSER</span> Operate in Cloudflare Dashboard
+</div>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#overview">Architecture &amp; Security Boundary</a></li>
+    <li><a href="#pre">Prerequisites</a></li>
+    <li><a href="#s1">Step 1: Configure AWS CLI on Mac</a></li>
+    <li><a href="#s2">Step 2: Record AWS Account ID</a></li>
+    <li><a href="#s3">Step 3: Create Tunnel in CF Dashboard &amp; Get Token</a></li>
+    <li><a href="#s4">Step 4: Store Token in AWS Secrets Manager</a></li>
+    <li><a href="#s5">Step 5: Create IAM Policy (minimal permissions)</a></li>
+    <li><a href="#s6">Step 6: Create IAM Role &amp; Attach Policy</a></li>
+    <li><a href="#s7">Step 7: Bind IAM Role to EC2 Instance</a></li>
+    <li><a href="#s8">Step 8: Install Docker &amp; AWS CLI on Host</a></li>
+    <li><a href="#s9">Step 9: Pull Token from AWS &amp; Write to Secret File</a></li>
+    <li><a href="#s10">Step 10: Create docker-compose.yml &amp; Start Container</a></li>
+    <li><a href="#s11">Step 11: Verify Tunnel Is Running</a></li>
+    <li><a href="#s12">Step 12: Security Verification (incl. root-level transparency)</a></li>
+    <li><a href="#summary">Security Summary</a></li>
+    <li><a href="#compliance">CMI Compliance &amp; Audit Commitments</a></li>
+    <li><a href="#faq">Troubleshooting</a></li>
+  </ol>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h1 id="overview">Architecture &amp; Security Boundary</h1>
+
+<h3>Why this approach is needed</h3>
+<p>Traditional deployment (<code>--token eyJ...</code> written directly into config) exposes the token statically:</p>
+<ul>
+  <li><code>docker inspect &lt;container&gt;</code> → token appears in plaintext in the Args field</li>
+  <li><code>cat /etc/systemd/system/cloudflared.service</code> → token visible in plaintext</li>
+  <li><code>ps aux</code> → token visible in process arguments</li>
+</ul>
+
+<h3>Two-layer isolation</h3>
+<ul>
+  <li><strong>Storage isolation:</strong> Token is stored in the customer's own AWS Secrets Manager. CMI has no access to the customer's AWS account.</li>
+  <li><strong>Runtime isolation:</strong> <code>cloudflared</code> runs in a Docker container using <code>--token-file</code>. The token value never appears in <code>docker inspect</code>, <code>ps aux</code>, or any config file.</li>
+</ul>
+
+<pre><code><span class="c">┌──────────────────────────────────────────────────────────────────────┐
+│         Customer's AWS Account (CMI has NO access whatsoever)        │
+│                                                                      │
+│   AWS Secrets Manager                                                │
+│   └── prod/cloudflare/warp-reverse-tunnel-token-aws                 │
+│         AES-256 encrypted at rest                                    │
+│         Access: only the IAM Role bound to the host EC2              │
+│         CMI IAM → GetSecretValue → 403 Forbidden                    │
+└─────────────────────────────┬────────────────────────────────────────┘
+                              │ Instance Profile auto-auth (no key file needed)
+                              │
+┌─────────────────────────────▼────────────────────────────────────────┐
+│                       CMI Host (EC2)                                  │
+│                                                                      │
+│  AWS CLI pulls token → /opt/cloudflared/secrets/tunnel.token        │
+│  Directory: chmod 700 (root-only entry)                              │
+│  File:      chmod 604 (root rw, container UID 65532 r)              │
+│                                                                      │
+│  docker-compose.yml (visible to CMI ops, but contains NO token)     │
+│  └── secrets.tunnel_token.file → /opt/cloudflared/secrets/tunnel.token
+│                                                                      │
+│  cloudflared container (runs as UID 65532)                          │
+│  └── --token-file /run/secrets/tunnel_token  ← path, not the token  │
+└─────────────────────────────┬────────────────────────────────────────┘
+                              │ QUIC / TLS 1.3 (4 connections to CF edge)
+                              ▼
+                     Cloudflare Global Network</span></code></pre>
+
+<div class="danger">
+  <strong>Transparent disclosure: residual exposure</strong><br>
+  Any secret held by a running process can technically be read from memory by the host root user. This applies to <code>cloudflared</code> as well:<br>
+  <code>sudo docker exec cloudflared-prod cat /run/secrets/tunnel_token</code> → token plaintext visible to root<br><br>
+  This is a fundamental Linux OS property — not a defect in this solution. <strong>This guide addresses static storage exposure (config files, docker inspect, ps aux), which represents the realistic everyday attack surface.</strong>
+  The root-level runtime risk is mitigated through CMI's compliance and audit controls — see the <a href="#compliance">Compliance section</a>.
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h1 id="pre">Prerequisites</h1>
+
+<table>
+  <tr><th>Requirement</th><th>Notes</th><th>✓</th></tr>
+  <tr><td>Independent AWS account</td><td>Must be fully inaccessible to CMI. If CMI manages your AWS account, this approach is invalid.</td><td>☐</td></tr>
+  <tr><td>AWS IAM admin access</td><td>Ability to create IAM Policy, Role, Instance Profile</td><td>☐</td></tr>
+  <tr><td>CMI-provided EC2 instance</td><td>Amazon Linux 2 or Ubuntu 20.04+</td><td>☐</td></tr>
+  <tr><td>SSH access to EC2</td><td></td><td>☐</td></tr>
+  <tr><td>Cloudflare One account</td><td>Zero Trust enabled, able to create Tunnels</td><td>☐</td></tr>
+  <tr><td>AWS CLI on Mac</td><td>See Step 1 if not installed</td><td>☐</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 1: Configure AWS CLI on Mac</div>
+<div class="step-bd" id="s1">
+
+<div class="purpose"><strong>Purpose:</strong> Enable your Mac to operate AWS via CLI — creating Secrets, IAM Policies, Roles, etc. If you prefer the web console, all steps can be done there and this step can be skipped.</div>
+
+<h3>1-A: Verify AWS CLI is installed</h3>
+<pre><code>aws --version
+<span class="c"># Expected: aws-cli/2.x.x Python/3.x.x Darwin/...</span></code></pre>
+<p>Not installed? Download from <a href="https://aws.amazon.com/cli/" target="_blank">https://aws.amazon.com/cli/</a></p>
+
+<h3>1-B: Create an AWS Access Key</h3>
+<ol>
+  <li>Log in to <a href="https://console.aws.amazon.com" target="_blank">https://console.aws.amazon.com</a></li>
+  <li>Click your username (top-right) → <strong>Security credentials</strong></li>
+  <li>Scroll to <strong>Access keys</strong> → <strong>Create access key</strong></li>
+</ol>
+<div class="warn"><strong>If the button is greyed out:</strong> AWS allows a maximum of 2 access keys. Delete the oldest unused key first.</div>
+<ol start="4">
+  <li>Use case: <strong>Command Line Interface (CLI)</strong> → confirm → Next → Create</li>
+  <li><strong>Copy both values immediately — they are shown only once.</strong></li>
+</ol>
+<div class="replace">
+  <h4>Record these values (keep private)</h4>
+  <table>
+    <tr><th>Field</th><th>Format</th><th>Example (replace with your real values)</th></tr>
+    <tr><td>Access key ID</td><td>AKIA + 16 chars</td><td>AKIAIOSFODNN7EXAMPLE</td></tr>
+    <tr><td>Secret access key</td><td>40-char string</td><td>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</td></tr>
+  </table>
+</div>
+
+<h3>1-C: Configure AWS CLI</h3>
+<pre><code>aws configure</code></pre>
+<pre><code><span class="o">AWS Access Key ID [None]:</span>      <span class="r">AKIAIOSFODNN7EXAMPLE</span>
+<span class="o">AWS Secret Access Key [None]:</span>  <span class="r">wJalrXUtnFEMI/K7MDENG/bPxRfi</span>
+<span class="o">Default region name [None]:</span>    <span class="r">ap-southeast-1</span>   <span class="c">← your region</span>
+<span class="o">Default output format [None]:</span>  <span class="r">json</span></code></pre>
+
+<div class="replace">
+  <h4>Common region codes</h4>
+  <table>
+    <tr><th>Region</th><th>Code</th></tr>
+    <tr><td>Singapore</td><td>ap-southeast-1</td></tr>
+    <tr><td>Hong Kong</td><td>ap-east-1</td></tr>
+    <tr><td>Tokyo</td><td>ap-northeast-1</td></tr>
+    <tr><td>US East (Virginia)</td><td>us-east-1</td></tr>
+  </table>
+</div>
+
+<h3>1-D: Verify</h3>
+<pre><code>aws sts get-caller-identity</code></pre>
+<div class="ok"><strong>Expected output:</strong>
+<pre><code><span class="o">{
+    "UserId": "AIDAIOSFODNN7EXAMPLE",
+    "Account": "123456789012",   <span class="c">← 12-digit Account ID — record this</span>
+    "Arn": "arn:aws:iam::123456789012:user/your-username"
+}</span></code></pre>
+</div>
+<div class="warn"><strong>"Could not connect to the endpoint URL":</strong> Try appending <code>--region ap-southeast-1</code>. Check network access to AWS.</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 2: Record AWS Account ID</div>
+<div class="step-bd" id="s2">
+
+<div class="purpose"><strong>Purpose:</strong> The AWS Account ID (12-digit number) is used in IAM ARNs throughout the remaining steps.</div>
+<p>Find it in the <code>"Account"</code> field from Step 1-D output, or click your username in AWS Console — it appears in the dropdown.</p>
+<div class="replace">
+  <h4>Record these values — replace all placeholders below</h4>
+  <table>
+    <tr><th>Placeholder</th><th>Replace with</th><th>Example</th></tr>
+    <tr><td><code>123456789012</code></td><td>Your 12-digit AWS Account ID</td><td>998768733324</td></tr>
+    <tr><td><code>ap-southeast-1</code></td><td>Your AWS region code</td><td>ap-southeast-1</td></tr>
+  </table>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-web">BROWSER</span> Step 3: Create Tunnel in CF Dashboard &amp; Get Token</div>
+<div class="step-bd" id="s3">
+
+<div class="purpose"><strong>Purpose:</strong> Create a tunnel in Cloudflare and copy the token string (starts with <code>eyJ</code>). Do NOT run any commands the page suggests — we deploy using <code>--token-file</code> instead.</div>
+
+<ol>
+  <li>Open <a href="https://one.dash.cloudflare.com" target="_blank">https://one.dash.cloudflare.com</a> → select your account</li>
+  <li><strong>Networks → Connectors → Cloudflare Tunnels → Create a tunnel</strong></li>
+  <li>Connector type: <strong>Cloudflared</strong> → Next</li>
+  <li>Tunnel name: e.g. <code>warp-reverse-tunnel</code> → <strong>Save tunnel</strong></li>
+  <li>Next page: select OS → <strong>Docker</strong></li>
+  <li>Copy ONLY the <code>eyJ...</code> token string from the displayed command:</li>
+</ol>
+<pre><code><span class="c">Displayed command:</span>
+docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token <span class="r">eyJhIjoiMDI5N2Rm...
+                                                                             ↑ copy only this</span></code></pre>
+
+<div class="warn">
+  <strong>The OS selection does not affect the token</strong> — choosing Docker just shows the relevant command format. Do NOT click Next and do NOT run the displayed command.<br>
+  "No connectors installed" is expected — the connector appears automatically after Step 10.
+</div>
+
+<div class="replace">
+  <h4>Record</h4>
+  <table>
+    <tr><th>Variable</th><th>Value</th></tr>
+    <tr><td>CF_TUNNEL_TOKEN</td><td>Full <code>eyJ...</code> string</td></tr>
+    <tr><td>CF_TUNNEL_NAME</td><td>Your tunnel name</td></tr>
+  </table>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 4: Store Token in AWS Secrets Manager</div>
+<div class="step-bd" id="s4">
+
+<div class="purpose"><strong>Purpose:</strong> Encrypt and store the CF tunnel token in your own AWS account. CMI has no access to your AWS account and cannot retrieve this secret. Run this on your Mac, not on the host.</div>
+
+<div class="warn"><strong>If a secret with the same name is in "pending deletion" state:</strong> AWS holds deleted secrets for 7 days before permanent removal. Use a different name and update all subsequent commands accordingly.</div>
+
+<h3>Option A: AWS CLI</h3>
+<pre><code>aws secretsmanager create-secret \
+  --name "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --description "Cloudflare tunnel token for Warp Reverse solution" \
+  --secret-string "<span class="r">eyJhIjoiMDI5N2Rm...(your full token from Step 3)</span>" \
+  --region <span class="r">ap-southeast-1</span></code></pre>
+
+<div class="ok"><strong>Expected output:</strong>
+<pre><code><span class="o">{
+    "ARN": "arn:aws:secretsmanager:ap-southeast-1:123456789012:secret:prod/cloudflare/warp-reverse-tunnel-token-aws-AbCdEf",
+    "Name": "prod/cloudflare/warp-reverse-tunnel-token-aws"
+}</span></code></pre>
+<strong>Record the full ARN (including the random suffix like <code>-AbCdEf</code>) — needed in Step 5.</strong><br>
+If the output contains <code>"DeletedDate"</code>, the secret is pending deletion. Restore it first:<br>
+<code>aws secretsmanager restore-secret --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" --region ap-southeast-1</code>
+</div>
+
+<h3>Option B: AWS Console</h3>
+<ol>
+  <li>AWS Console → <strong>Secrets Manager</strong> → <strong>Store a new secret</strong></li>
+  <li>Secret type: <strong>Other type of secret</strong> → switch to <strong>Plaintext</strong> → paste token → Next</li>
+  <li>Name: <code>prod/cloudflare/warp-reverse-tunnel-token-aws</code> → Next → Next → Store</li>
+  <li>Open the secret and copy the <strong>Secret ARN</strong></li>
+</ol>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 5: Create IAM Policy (minimal permissions)</div>
+<div class="step-bd" id="s5">
+
+<div class="purpose"><strong>Purpose:</strong> Create an IAM Policy that allows reading only this one specific Secret — nothing else in your AWS account.</div>
+
+<pre><code><span class="c"># Replace ap-southeast-1 with your region, 123456789012 with your Account ID</span>
+cat > /tmp/cf-tunnel-policy.json &lt;&lt; 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReadTunnelToken",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ],
+      "Resource": "arn:aws:secretsmanager:<span class="r">ap-southeast-1</span>:<span class="r">123456789012</span>:secret:prod/cloudflare/warp-reverse-tunnel-token-aws-*"
+    }
+  ]
+}
+EOF
+
+aws iam create-policy \
+  --policy-name "CloudflareTunnelTokenReadOnly" \
+  --description "Read-only access to Cloudflare tunnel token in Secrets Manager" \
+  --policy-document file:///tmp/cf-tunnel-policy.json</code></pre>
+
+<div class="replace">
+  <h4>Values to replace</h4>
+  <table>
+    <tr><th>Placeholder</th><th>Replace with</th><th>Source</th></tr>
+    <tr><td><code>ap-southeast-1</code></td><td>Your AWS region</td><td>Step 2</td></tr>
+    <tr><td><code>123456789012</code></td><td>Your 12-digit Account ID</td><td>Step 2</td></tr>
+  </table>
+  <p>The <code>-*</code> wildcard at the end matches the random suffix AWS appends to secret names.</p>
+</div>
+
+<div class="ok"><strong>Expected output includes:</strong>
+<pre><code><span class="o">{
+    "Policy": {
+        "PolicyName": "CloudflareTunnelTokenReadOnly",
+        "Arn": "arn:aws:iam::123456789012:policy/CloudflareTunnelTokenReadOnly"
+    }
+}</span></code></pre>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-mac">MAC</span> Step 6: Create IAM Role &amp; Attach Policy</div>
+<div class="step-bd" id="s6">
+
+<div class="purpose"><strong>Purpose:</strong> An IAM Role is an identity that EC2 can assume. Once the EC2 instance assumes this role, it automatically receives temporary credentials to read the secret — no Access Key file stored anywhere on the host.</div>
+
+<pre><code><span class="c"># Create Trust Policy (only EC2 service can assume this role)</span>
+cat > /tmp/ec2-trust-policy.json &lt;&lt; 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "ec2.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+aws iam create-role \
+  --role-name "cf-tunnel-ec2-role" \
+  --description "EC2 role for cloudflared — read tunnel token from Secrets Manager" \
+  --assume-role-policy-document file:///tmp/ec2-trust-policy.json
+
+<span class="c"># Attach Policy (replace 123456789012 with your Account ID)</span>
+aws iam attach-role-policy \
+  --role-name "cf-tunnel-ec2-role" \
+  --policy-arn "arn:aws:iam::<span class="r">123456789012</span>:policy/CloudflareTunnelTokenReadOnly"
+
+aws iam create-instance-profile \
+  --instance-profile-name "cf-tunnel-ec2-profile"
+
+aws iam add-role-to-instance-profile \
+  --instance-profile-name "cf-tunnel-ec2-profile" \
+  --role-name "cf-tunnel-ec2-role"</code></pre>
+
+<div class="ok"><strong>Verify:</strong>
+<pre><code>aws iam list-attached-role-policies --role-name "cf-tunnel-ec2-role"
+<span class="c"># Expected: CloudflareTunnelTokenReadOnly listed</span></code></pre>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-web">AWS Console</span> / <span class="env env-mac">MAC</span> Step 7: Bind IAM Role to EC2 Instance</div>
+<div class="step-bd" id="s7">
+
+<div class="purpose"><strong>Purpose:</strong> Bind the Role from Step 6 to the CMI EC2 instance. After binding, programs on the host receive automatic temporary AWS credentials (rotated hourly) — no manual key management needed.</div>
+
+<h3>Option A: AWS Console</h3>
+<ol>
+  <li>EC2 → Instances → select your instance</li>
+  <li><strong>Actions → Security → Modify IAM role</strong></li>
+  <li>Select <code>cf-tunnel-ec2-role</code> → <strong>Update IAM role</strong></li>
+</ol>
+
+<h3>Option B: AWS CLI</h3>
+<pre><code><span class="c"># Replace i-xxxxxxxxxxxxxxxxx with your EC2 Instance ID</span>
+aws ec2 associate-iam-instance-profile \
+  --instance-id <span class="r">i-xxxxxxxxxxxxxxxxx</span> \
+  --iam-instance-profile Name="cf-tunnel-ec2-profile" \
+  --region <span class="r">ap-southeast-1</span></code></pre>
+
+<h3>Verify on the host</h3>
+<pre><code>curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/
+<span class="c"># Expected: cf-tunnel-ec2-role</span></code></pre>
+<p>If no output, wait 1-2 minutes and retry.</p>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">HOST</span> Step 8: Install Docker &amp; AWS CLI on Host</div>
+<div class="step-bd" id="s8">
+
+<div class="purpose"><strong>Purpose:</strong> The host needs Docker (to run the cloudflared container) and AWS CLI (to pull the token). <code>cloudflared</code> itself is NOT installed on the host — it runs entirely inside the container.</div>
+
+<h4>Amazon Linux 2 (validated environment)</h4>
+<div class="warn"><strong>Do NOT use <code>curl -fsSL https://get.docker.com | sudo sh</code></strong> — it fails on Amazon Linux with <code>ERROR: Unsupported distribution 'amzn'</code>.<br>
+If the machine has broken third-party repos (e.g., ookla speedtest), use <code>--disablerepo</code> to bypass them.</div>
+
+<pre><code><span class="c"># Install using AWS official repo only</span>
+sudo yum install -y docker \
+  --disablerepo="*" \
+  --enablerepo="amzn2-core,amzn2extra-docker"
+
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+newgrp docker</code></pre>
+
+<h4>Ubuntu / Debian</h4>
+<pre><code>curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+newgrp docker</code></pre>
+
+<h4>Docker Compose Plugin (Amazon Linux 2 — separate install required)</h4>
+<pre><code>sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose</code></pre>
+
+<div class="ok"><strong>Verify:</strong>
+<pre><code>docker --version && docker compose version
+<span class="o">Docker version 25.0.14, build 0bab007
+Docker Compose version v5.1.1</span></code></pre>
+</div>
+
+<h4>AWS CLI v2</h4>
+<pre><code>curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+sudo yum install -y unzip 2>/dev/null || sudo apt-get install -y unzip 2>/dev/null
+unzip -q /tmp/awscliv2.zip -d /tmp/ && sudo /tmp/aws/install
+aws --version</code></pre>
+
+<h4>Verify Instance Profile access (no <code>aws configure</code> needed)</h4>
+<pre><code>aws secretsmanager describe-secret \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region <span class="r">ap-southeast-1</span>
+<span class="c"># Expected: ARN and Name visible — no Access Key required on the host</span></code></pre>
+
+<div class="warn"><strong>AccessDeniedException:</strong> IAM Role not bound — go back to Step 7.<br>
+<strong>UnrecognizedClientException:</strong> Wrong region, or Instance Profile not yet active — wait 2 min and retry.</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">HOST</span> Step 9: Pull Token from AWS &amp; Write to Secret File</div>
+<div class="step-bd" id="s9">
+
+<div class="purpose"><strong>Purpose:</strong> Pull the token from AWS and write it to a local file on the host, which Docker will mount into the container as a secret. Directory and file permissions are strictly locked down so regular ops accounts cannot read the file.</div>
+
+<pre><code><span class="c"># Create secret directory (root-only entry)</span>
+sudo mkdir -p /opt/cloudflared/secrets
+sudo chmod 700 /opt/cloudflared/secrets
+
+<span class="c"># Pull token from AWS and write to file</span>
+aws secretsmanager get-secret-value \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region <span class="r">ap-southeast-1</span> \
+  --query "SecretString" \
+  --output text \
+  | sudo tee /opt/cloudflared/secrets/tunnel.token > /dev/null
+
+<span class="c"># Set permissions: 604 = root rw, group none, other r</span>
+<span class="c"># IMPORTANT: cloudflared container runs as UID 65532 (non-root)</span>
+<span class="c"># The container needs "other" read (r--) — chmod 600 causes permission denied</span>
+sudo chmod 604 /opt/cloudflared/secrets/tunnel.token
+sudo chown root:root /opt/cloudflared/secrets/tunnel.token
+
+<span class="c"># Verify (regular users cannot even ls the directory)</span>
+sudo stat /opt/cloudflared/secrets/tunnel.token | grep Access</code></pre>
+
+<div class="ok"><strong>Expected output:</strong>
+<pre><code><span class="o">Access: (0604/-rw----r--)  Uid: (0/root)   Gid: (0/root)</span></code></pre>
+<ul>
+  <li><code>rw-</code> (owner=root): root can read/write</li>
+  <li><code>---</code> (group): no group access</li>
+  <li><code>r--</code> (other): container UID 65532 reads via "other" permission</li>
+  <li>Directory <code>chmod 700</code>: regular ops accounts get <code>Permission denied</code> even on <code>ls</code></li>
+</ul>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">HOST</span> Step 10: Create docker-compose.yml &amp; Start Container</div>
+<div class="step-bd" id="s10">
+
+<div class="purpose"><strong>Purpose:</strong> Start the cloudflared container via Docker Compose. The key design: <code>--token-file</code> instead of <code>--token</code>, so the token value never appears in <code>docker inspect</code> or any config file.</div>
+
+<pre><code>sudo mkdir -p /opt/cloudflared
+
+sudo tee /opt/cloudflared/docker-compose.yml > /dev/null &lt;&lt; 'EOF'
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-prod
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token-file /run/secrets/tunnel_token
+    secrets:
+      - tunnel_token
+    tmpfs:
+      - /tmp
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+secrets:
+  tunnel_token:
+    file: /opt/cloudflared/secrets/tunnel.token
+EOF</code></pre>
+
+<div class="purpose"><strong>Key design decisions:</strong>
+<table style="margin-top:8px;">
+  <tr><th>Setting</th><th>Reason</th></tr>
+  <tr><td><code>--token-file</code> not <code>--token</code></td><td>Token value never appears in <code>docker inspect</code> or process args</td></tr>
+  <tr><td><code>secrets.tunnel_token.file</code></td><td>Docker secrets mechanism mounts the file into the container</td></tr>
+  <tr><td><code>tmpfs: /tmp</code></td><td>Prevents container from writing temp files to host disk</td></tr>
+  <tr><td>No <code>read_only: true</code></td><td>Docker secrets mount to <code>/run/secrets/</code>; in read_only mode UID 65532 cannot read it → permission denied. <code>tmpfs</code> provides equivalent protection.</td></tr>
+</table>
+</div>
+
+<pre><code>cd /opt/cloudflared
+sudo docker compose up -d
+sudo docker compose ps</code></pre>
+
+<div class="ok"><strong>Expected:</strong>
+<pre><code><span class="o">NAME               IMAGE                           STATUS
+cloudflared-prod   cloudflare/cloudflared:latest   Up X seconds</span></code></pre>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">HOST</span> / <span class="env env-web">BROWSER</span> Step 11: Verify Tunnel Is Running</div>
+<div class="step-bd" id="s11">
+
+<h3>Check container logs — 4 connections expected</h3>
+<pre><code>sudo docker logs cloudflared-prod --tail 30</code></pre>
+<div class="ok"><strong>Expected key lines:</strong>
+<pre><code><span class="o">INF Registered tunnel connection connIndex=0 ... location=sin21 protocol=quic
+INF Registered tunnel connection connIndex=1 ... location=sin12 protocol=quic
+INF Registered tunnel connection connIndex=2 ... location=sin22 protocol=quic
+INF Registered tunnel connection connIndex=3 ... location=sin17 protocol=quic</span></code></pre>
+Four connections across at least 2 data centers — tunnel is healthy.
+</div>
+
+<h3>Verify docker inspect does NOT expose the token</h3>
+<pre><code>sudo docker inspect cloudflared-prod | grep -iE "token|eyJ"</code></pre>
+<div class="ok"><strong>Expected: only file paths visible, NO <code>eyJ...</code> token value.</strong></div>
+
+<h3>Verify process args do NOT contain the token</h3>
+<pre><code>ps aux | grep cloudflared
+<span class="c"># Expected: ...run --token-file /run/secrets/tunnel_token  ← path, not token</span></code></pre>
+
+<h3>CF Dashboard</h3>
+<p><a href="https://one.dash.cloudflare.com" target="_blank">https://one.dash.cloudflare.com</a> → Networks → Tunnels → tunnel shows <strong>Healthy</strong> (green)</p>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="step">
+<div class="step-hd"><span class="env env-vm">HOST</span> Step 12: Security Verification (incl. root-level transparency)</div>
+<div class="step-bd" id="s12">
+
+<div class="purpose"><strong>Purpose:</strong> Test each possible token-reading approach from a CMI operator's perspective, honestly showing what is blocked and what remains accessible.</div>
+
+<h3>Test 1: docker inspect</h3>
+<pre><code>sudo docker inspect cloudflared-prod | grep -iE "token|eyJ"</code></pre>
+<div class="ok"><strong>Blocked.</strong> Output contains only file paths — no token value.</div>
+
+<h3>Test 2: Read docker-compose.yml</h3>
+<pre><code>cat /opt/cloudflared/docker-compose.yml | grep -iE "eyJ"</code></pre>
+<div class="ok"><strong>Blocked.</strong> Config file contains no token value.</div>
+
+<h3>Test 3: Regular ops account reads secret file</h3>
+<pre><code>ls /opt/cloudflared/secrets/tunnel.token
+cat /opt/cloudflared/secrets/tunnel.token</code></pre>
+<div class="ok"><strong>Blocked.</strong>
+<pre><code><span class="o">ls: cannot access /opt/cloudflared/secrets/tunnel.token: Permission denied
+cat: /opt/cloudflared/secrets/tunnel.token: Permission denied</span></code></pre>
+Directory <code>chmod 700</code> — non-root accounts cannot even enter the directory.
+</div>
+
+<h3>Test 4: CMI attempts to access customer AWS Secrets Manager</h3>
+<pre><code>AWS_ACCESS_KEY_ID="" AWS_SECRET_ACCESS_KEY="" \
+aws secretsmanager get-secret-value \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region <span class="r">ap-southeast-1</span> \
+  --no-sign-request 2>&amp;1 || true</code></pre>
+<div class="ok"><strong>Blocked.</strong>
+<pre><code><span class="o">An error occurred (AuthFailure): Request must be signed</span></code></pre>
+CMI has no customer AWS credentials — this is the core architectural boundary of this solution.
+</div>
+
+<h3>Test 5: Root reads token via docker exec — ⚠️ RESIDUAL EXPOSURE</h3>
+<pre><code>sudo docker exec cloudflared-prod cat /run/secrets/tunnel_token</code></pre>
+<div class="danger"><strong>Token plaintext is visible to root.</strong><br><br>
+This is an <strong>acknowledged and intentionally disclosed</strong> residual exposure. Any secret held by a running process is technically readable from memory by the host root user — this is a fundamental Linux OS property, not a flaw in this design.<br><br>
+Equivalent approach: <code>sudo cat /proc/$(docker inspect --format '{{.State.Pid}}' cloudflared-prod)/root/run/secrets/tunnel_token</code><br><br>
+<strong>What this solution does protect against:</strong> static storage exposure via config files, <code>docker inspect</code>, <code>ps aux</code> — the realistic everyday attack vectors.<br><br>
+<strong>What mitigates the root-level risk:</strong> CMI's compliance controls — see below.
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h1 id="summary">Security Summary</h1>
+
+<table>
+  <tr><th>Attack Vector</th><th>Result</th><th>Notes</th></tr>
+  <tr><td><code>docker inspect</code></td><td>✅ Blocked</td><td><code>--token-file</code> — only file path visible</td></tr>
+  <tr><td>Read docker-compose.yml</td><td>✅ Blocked</td><td>No token in config</td></tr>
+  <tr><td><code>ps aux</code></td><td>✅ Blocked</td><td>Only file path in process args</td></tr>
+  <tr><td>Regular ops account reads file</td><td>✅ Blocked</td><td>Dir <code>chmod 700</code> — Permission denied</td></tr>
+  <tr><td>CMI accesses customer AWS</td><td>✅ Blocked</td><td>No IAM credentials — 403</td></tr>
+  <tr style="background:#fff8e6"><td>Root <code>docker exec</code> into container</td><td>⚠️ Visible</td><td>Requires deliberate root action; fully audited</td></tr>
+  <tr style="background:#fff8e6"><td>Root reads process memory</td><td>⚠️ Visible</td><td>OS-level — no pure-software mitigation</td></tr>
+</table>
+
+<h3>Comparison: traditional vs. this approach</h3>
+<table>
+  <tr><th>Dimension</th><th>Traditional (<code>--token eyJ...</code> direct)</th><th>This Approach</th></tr>
+  <tr><td><code>docker inspect</code> exposure</td><td>❌ Token in Args field</td><td>✅ File path only</td></tr>
+  <tr><td>Config on disk</td><td>❌ Token in compose/service file</td><td>✅ Secret file root-only; no token in compose</td></tr>
+  <tr><td>AWS Secrets Manager access</td><td>N/A</td><td>✅ CMI has no IAM access — 403</td></tr>
+  <tr><td>Token rotation</td><td>Edit config + restart</td><td>✅ Re-pull + restart container</td></tr>
+  <tr><td>Attack barrier</td><td>Low (just <code>cat</code> a file)</td><td>High (root + deliberate action + full audit trail)</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════════════════ -->
+<div class="compliance-box">
+<h1 id="compliance" style="border:none; margin-top:0; padding-bottom:8px; font-size:22px; color:#4a0080;">CMI Compliance &amp; Audit Commitments</h1>
+
+<p>Given the technical transparency above — a host root user can technically read the token from a running container — CMI commits to the following controls as a compliance layer over the technical safeguards:</p>
+
+<h3>Least Privilege</h3>
+<ul>
+  <li>Daily ops accounts (e.g., <code>ec2-user</code>) have <strong>no root or sudo access</strong> — they cannot enter the secret directory or run <code>docker exec</code></li>
+  <li>Root / sudo is restricted to named sysadmins with dual-approval workflow</li>
+  <li>CMI ops accounts have <strong>no read permission</strong> on any customer token path in OpenBao (CMI's internal secret manager)</li>
+</ul>
+
+<h3>Full Audit Logging</h3>
+<ul>
+  <li><code>auditd</code> on host records all <code>docker exec</code>, <code>ptrace</code>, <code>/proc</code> access — logs are tamper-resistant</li>
+  <li>OpenBao logs every secret read/write event with operator identity, timestamp, and source IP</li>
+  <li>AWS CloudTrail logs all Secrets Manager API calls — customers can view independently in their own AWS account</li>
+  <li>Log retention: minimum 90 days</li>
+</ul>
+
+<h3>Customer Audit Rights</h3>
+<ul>
+  <li>Customers may request filtered audit reports at any time — CMI provides only that customer's events, never other customers' data</li>
+  <li>Customers can verify independently via their own AWS CloudTrail without relying on CMI</li>
+</ul>
+
+<h3>Contractual Constraint</h3>
+<ul>
+  <li>CMI's service agreement explicitly prohibits accessing customer tunnel tokens</li>
+  <li>Violations constitute a critical security incident with defined liability provisions</li>
+</ul>
+
+<h3>Token Rotation Recommendations</h3>
+<ul>
+  <li>Rotate at minimum quarterly</li>
+  <li>Rotate immediately upon any relevant personnel change on CMI's side</li>
+  <li>After rotation, the old token is immediately invalidated on Cloudflare's side — even if previously read, it cannot be reused</li>
+</ul>
+
+<p style="font-size:13px; color:#666; margin-top:14px;">
+  CMI's security model is consistent with industry-standard managed service frameworks (analogous to the AWS Shared Responsibility Model):
+  <strong>CMI commits not to access customer credentials proactively, raises the technical barrier to access, establishes a deterrent through audit, and preserves the customer's right to independently verify.</strong>
+</p>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h1 id="faq">Troubleshooting</h1>
+
+<h3>Issue 1: <code>yum install docker</code> fails — "One of the configured repositories failed"</h3>
+<p>A broken third-party repo (e.g., ookla speedtest) blocks yum entirely. Use AWS official repos only:</p>
+<pre><code>sudo yum install -y docker \
+  --disablerepo="*" \
+  --enablerepo="amzn2-core,amzn2extra-docker"</code></pre>
+
+<h3>Issue 2: Container keeps restarting — "Failed to read token file: permission denied"</h3>
+<pre><code><span class="c"># Confirm container user</span>
+sudo docker inspect cloudflared-prod | grep '"User"'
+<span class="c"># Should show: "User": "65532:65532"</span>
+
+<span class="c"># Fix permissions (604 not 600)</span>
+sudo chmod 604 /opt/cloudflared/secrets/tunnel.token
+
+<span class="c"># Restart</span>
+cd /opt/cloudflared && sudo docker compose down && sudo docker compose up -d</code></pre>
+
+<h3>Issue 3: Tunnel Unhealthy / no connections</h3>
+<pre><code>sudo docker logs cloudflared-prod --tail 50 | grep -E "ERR|WARN|failed"</code></pre>
+<p>Common cause: outbound ports blocked. Ensure these outbound rules are open:</p>
+<ul>
+  <li><code>443/tcp</code> → <code>api.cloudflare.com</code></li>
+  <li><code>7844/tcp + 7844/udp</code> → <code>region1.v2.argotunnel.com</code> and <code>region2.v2.argotunnel.com</code></li>
+</ul>
+
+<h3>Issue 4: How to rotate the token</h3>
+<p><span class="env env-web">BROWSER</span> CF Dashboard → Networks → Tunnels → tunnel → Edit → <strong>Refresh token</strong> → copy new token</p>
+<p><span class="env env-mac">MAC</span> Update AWS Secrets Manager:</p>
+<pre><code>aws secretsmanager update-secret \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --secret-string "<span class="r">eyJ...(new full token)</span>" \
+  --region <span class="r">ap-southeast-1</span></code></pre>
+<p><span class="env env-vm">HOST</span> Re-pull and restart:</p>
+<pre><code>aws secretsmanager get-secret-value \
+  --secret-id "prod/cloudflare/warp-reverse-tunnel-token-aws" \
+  --region ap-southeast-1 \
+  --query "SecretString" --output text \
+  | sudo tee /opt/cloudflared/secrets/tunnel.token > /dev/null
+
+cd /opt/cloudflared && sudo docker compose restart cloudflared</code></pre>
+<p>If an unauthorized connector may have connected, force-disconnect all:</p>
+<pre><code><span class="c"># Replace ACCOUNT_ID, TUNNEL_ID, CLOUDFLARE_API_TOKEN with real values</span>
+curl "https://api.cloudflare.com/client/v4/accounts/<span class="r">ACCOUNT_ID</span>/cfd_tunnel/<span class="r">TUNNEL_ID</span>/connections" \
+  --request DELETE \
+  --header "Authorization: Bearer <span class="r">CLOUDFLARE_API_TOKEN</span>"</code></pre>
+
+<hr>
+<p style="color:#aaa; font-size:12px; text-align:center;">
+  Version: 2026-04 &nbsp;|&nbsp; Validated on: Amazon Linux 2 + Docker 25.0.14 &nbsp;|&nbsp; Author: Dong Zhang &nbsp;|&nbsp;
+  <a href="tunnel-token-security-zh.html" style="color:#aaa;">中文版</a>
+</p>
+
+</body>
+</html>
