@@ -31,12 +31,14 @@ Shanghai Egress → Ali DNS → Mainland China Target
 
 ## Documents
 
-| Document | Description |
-|----------|-------------|
-| [**Solution Overview**](docs/warp-reverse-solution.md) | Full architecture, traffic flow, configuration steps, Hostname Routes API, tunnel token security, and performance results |
-| [Tunnel Token Security Guide (EN)](docs/tunnel-token-security-guide-en.md) | Step-by-step deployment: AWS Secrets Manager + Docker + CMI compliance commitments |
-| [Tunnel Token 安全部署手册（中文）](docs/tunnel-token-security-guide-zh.md) | 中文完整操作手册 |
-| [China Domain List](docs/china-domains.md) | 200+ curated mainland China root domains for Hostname Routes — bulk upload ready |
+| Document | Format | Description |
+|----------|--------|-------------|
+| [**Solution Overview**](docs/warp-reverse-solution.md) | Markdown | Full architecture, traffic flow, configuration steps, Hostname Routes API, tunnel token security, and performance results |
+| [Tunnel Token Security Guide (EN)](docs/tunnel-token-security-guide-en.md) · [**HTML ↗**](https://cfchinanetwork.github.io/warp-reverse/html/tunnel-token-security-en.html) | MD / HTML | Step-by-step deployment: AWS Secrets Manager + Docker + CMI compliance |
+| [Tunnel Token 安全部署手册（中文）](docs/tunnel-token-security-guide-zh.md) · [**HTML ↗**](https://cfchinanetwork.github.io/warp-reverse/html/tunnel-token-security-zh.html) | MD / HTML | 中文完整操作手册 |
+| [China Domain List](docs/china-domains.md) | Markdown | 200+ curated mainland China root domains — bulk upload ready |
+
+> **Online docs (full styling):** https://cfchinanetwork.github.io/warp-reverse/html/index.html
 
 ## Quick Start
 
